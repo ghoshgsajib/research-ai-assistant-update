@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // New API Key added successfully
-  static const String apiKey = "AIzaSyB96FJlqVHK07Z-gneIwsmRxfCYEuoDZZA";
-  static const String modelName = "gemini-1.5-flash";
+  // আপনার দেওয়া OpenRouter API Key
+  static const String apiKey = "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";
+  
+  // OpenRouter-এর মাধ্যমে Gemini মডেল ব্যবহারের নাম
+  static const String modelName = "google/gemini-flash-1.5"; 
 
-  // চ্যাটের জন্য সঠিক মেথড
   static Future<String> generateChatResponse({required String prompt}) async {
     return generateResponse(
       prompt: "You are a helpful Research AI Assistant. Answer this question clearly and helpfuly: $prompt",
@@ -39,29 +40,31 @@ class GeminiService {
     if (apiKey.isEmpty) return "Error: API Key is missing.";
 
     try {
+      // OpenRouter API-এর জন্য সঠিক ইউআরএল এবং হেডার সেট করা হয়েছে
       final response = await http.post(
-        Uri.parse(
-          "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey",
-        ),
-        headers: {"Content-Type": "application/json"},
+        Uri.parse("https://openrouter.ai/api/v1/chat/completions"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $apiKey",
+          "HTTP-Referer": "https://research-ai-assistant.vercel.app", // আপনার সাইট ইউআরএল
+          "X-Title": "Research AI Assistant",
+        },
         body: jsonEncode({
-          "contents": [
-            {
-              "parts": [
-                {"text": prompt},
-              ],
-            },
+          "model": modelName,
+          "messages": [
+            {"role": "user", "content": prompt}
           ],
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final text = data["candidates"]?[0]?["content"]?["parts"]?[0]?["text"];
+        // OpenRouter রেসপন্স ফরম্যাট অনুযায়ী ডাটা নেওয়া হচ্ছে
+        final text = data["choices"]?[0]?["message"]?["content"];
         if (text != null) return text;
       }
-
-      return "AI temporarily unavailable (Status: ${response.statusCode}). Please check your API quota.";
+      
+      return "AI Error (Status: ${response.statusCode}). Please check your OpenRouter credits or API settings.";
     } catch (e) {
       return "Connection Error: Please check your internet connection.";
     }
