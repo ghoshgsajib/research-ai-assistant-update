@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // আপনার নতুন API Key এখানে যোগ করা হয়েছে
   static const String apiKey = "AIzaSyA_t3RP84f7v6mznf5tKha5wOSL-aZ92_A";
-
-  // লেটেস্ট স্টেবল মডেল ব্যবহার করা হচ্ছে
   static const String modelName = "gemini-1.5-flash";
+
+  // চ্যাটের জন্য সঠিক মেথড
+  static Future<String> generateChatResponse({required String prompt}) async {
+    return generateResponse(
+      prompt: "You are a helpful Research AI Assistant. Answer this question clearly and helpfuly: $prompt",
+    );
+  }
 
   static Future<String> generatePdfSummary({
     required String fileName,
@@ -17,20 +21,7 @@ class GeminiService {
         : extractedText;
 
     return generateResponse(
-      prompt: """
-Summarize this uploaded research paper PDF.
-Title: $fileName
-
-Focus on:
-1. Paper topic
-2. Main objective
-3. Methodology
-4. Key contribution
-5. Possible future work
-
-PDF Text:
-$limitedText
-""",
+      prompt: "Summarize this research paper PDF. Title: $fileName. Text: $limitedText",
     );
   }
 
@@ -39,28 +30,12 @@ $limitedText
     required String abstract,
   }) async {
     return generateResponse(
-      prompt: """
-Generate a professional research paper summary.
-
-Title:
-$title
-
-Abstract:
-$abstract
-
-Provide:
-1. Research Objective
-2. Methodology
-3. Key Findings
-4. Conclusion
-""",
+      prompt: "Generate a structured research summary for - Title: $title, Abstract: $abstract",
     );
   }
 
   static Future<String> generateResponse({required String prompt}) async {
-    if (apiKey.isEmpty) {
-      return _generateFallback(prompt);
-    }
+    if (apiKey.isEmpty) return "Error: API Key is missing.";
 
     try {
       final response = await http.post(
@@ -81,33 +56,13 @@ Provide:
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // Correct path for Gemini v1beta response parsing
         final text = data["candidates"]?[0]?["content"]?["parts"]?[0]?["text"];
-
-        if (text != null) {
-          return text;
-        }
+        if (text != null) return text;
       }
 
-      return _generateFallback(prompt);
+      return "AI temporarily unavailable (Status: ${response.statusCode}). Please check your API quota.";
     } catch (e) {
-      return _generateFallback(prompt);
+      return "Connection Error: Please check your internet connection.";
     }
-  }
-
-  static String _generateFallback(String prompt) {
-    final lowerPrompt = prompt.toLowerCase();
-
-    // সাধারণ চ্যাটের জন্য অফলাইন মেসেজ
-    if (lowerPrompt.contains("suggest") || lowerPrompt.contains("explain") || lowerPrompt.contains("hi") || lowerPrompt.contains("hello")) {
-      return "I'm currently in offline mode or the API key is invalid. Please check your internet and Gemini API settings. I can still help you with your local research notes!";
-    }
-
-    return """
-1. Research Objective
-This study focuses on automated research assistance. The main objective is to improve research productivity through intelligent tools.
-
-Note: Gemini API was unavailable or the key is limited, so this local response was generated.
-""";
   }
 }

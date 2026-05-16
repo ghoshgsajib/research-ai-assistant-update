@@ -37,9 +37,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
       messageController.clear();
     });
 
-    final response = await GeminiService.generateSummary(
-      title: "Research Chat Question",
-      abstract: userMessage,
+    // Fixed: calling generateChatResponse instead of generateSummary
+    final response = await GeminiService.generateChatResponse(
+      prompt: userMessage,
     );
 
     if (!mounted) return;
@@ -137,9 +137,14 @@ class _AIChatScreenState extends State<AIChatScreen> {
                   return Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: CircularProgressIndicator(
-                        color: Theme.of(context).colorScheme.primary,
+                      padding: const EdgeInsets.only(bottom: 12, left: 14),
+                      child: const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   );
