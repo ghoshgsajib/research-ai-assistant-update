@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // আপনার দেওয়া OpenRouter API Key
-  static const String apiKey = "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";
+  // GitHub Push Protection এড়াতে এবং নিরাপত্তার জন্য হার্ডকোডেড কি সরানো হয়েছে।
+  // Vercel-এ OPENROUTER_API_KEY নামে এটি সেট করতে হবে।
+  static const String apiKey = String.fromEnvironment('OPENROUTER_API_KEY');
   
-  // OpenRouter-এর মাধ্যমে Gemini মডেল ব্যবহারের নাম
-  static const String modelName = "google/gemini-flash-1.5"; 
+  static const String modelName = "google/gemini-flash-1.5";
 
   static Future<String> generateChatResponse({required String prompt}) async {
     return generateResponse(
@@ -37,16 +37,15 @@ class GeminiService {
   }
 
   static Future<String> generateResponse({required String prompt}) async {
-    if (apiKey.isEmpty) return "Error: API Key is missing.";
+    if (apiKey.isEmpty) return "Error: API Key is missing. Please set OPENROUTER_API_KEY in Environment Variables.";
 
     try {
-      // OpenRouter API-এর জন্য সঠিক ইউআরএল এবং হেডার সেট করা হয়েছে
       final response = await http.post(
         Uri.parse("https://openrouter.ai/api/v1/chat/completions"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $apiKey",
-          "HTTP-Referer": "https://research-ai-assistant.vercel.app", // আপনার সাইট ইউআরএল
+          "HTTP-Referer": "https://research-ai-assistant.vercel.app",
           "X-Title": "Research AI Assistant",
         },
         body: jsonEncode({
@@ -59,12 +58,11 @@ class GeminiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // OpenRouter রেসপন্স ফরম্যাট অনুযায়ী ডাটা নেওয়া হচ্ছে
         final text = data["choices"]?[0]?["message"]?["content"];
         if (text != null) return text;
       }
       
-      return "AI Error (Status: ${response.statusCode}). Please check your OpenRouter credits or API settings.";
+      return "AI Error (Status: ${response.statusCode}). Please check your OpenRouter account.";
     } catch (e) {
       return "Connection Error: Please check your internet connection.";
     }
