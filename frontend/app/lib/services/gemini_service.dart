@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  static const String apiKey = "AIzaSyA_t3RP84f7v6mznf5tKha5wOSL-aZ92_A";
+  // New API Key added successfully
+  static const String apiKey = "AIzaSyB96FJlqVHK07Z-gneIwsmRxfCYEuoDZZA";
   static const String modelName = "gemini-1.5-flash";
 
   // চ্যাটের জন্য সঠিক মেথড
