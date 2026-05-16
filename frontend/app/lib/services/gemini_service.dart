@@ -2,7 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  static const String apiKey = "AIzaSyDmOeiLC4kQRAUUaSUHsPCTjei1PdYEktI";
+  // আপনার নতুন API Key এখানে যোগ করা হয়েছে
+  static const String apiKey = "AIzaSyA_t3RP84f7v6mznf5tKha5wOSL-aZ92_A";
+
+  // লেটেস্ট স্টেবল মডেল ব্যবহার করা হচ্ছে
+  static const String modelName = "gemini-1.5-flash";
 
   static Future<String> generatePdfSummary({
     required String fileName,
@@ -61,7 +65,7 @@ Provide:
     try {
       final response = await http.post(
         Uri.parse(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey",
+          "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -77,7 +81,7 @@ Provide:
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // Correct path for Gemini v1beta response
+        // Correct path for Gemini v1beta response parsing
         final text = data["candidates"]?[0]?["content"]?["parts"]?[0]?["text"];
 
         if (text != null) {
@@ -94,30 +98,16 @@ Provide:
   static String _generateFallback(String prompt) {
     final lowerPrompt = prompt.toLowerCase();
 
-    // Generic chat response fallback
-    if (lowerPrompt.contains("suggest") || lowerPrompt.contains("explain") || lowerPrompt.contains("how to")) {
-      return "I'm currently in offline mode. I can help you organize your research notes and track experiments locally. To get AI-powered insights, please check your Gemini API key and internet connection.";
+    // সাধারণ চ্যাটের জন্য অফলাইন মেসেজ
+    if (lowerPrompt.contains("suggest") || lowerPrompt.contains("explain") || lowerPrompt.contains("hi") || lowerPrompt.contains("hello")) {
+      return "I'm currently in offline mode or the API key is invalid. Please check your internet and Gemini API settings. I can still help you with your local research notes!";
     }
-
-    // Summary fallback logic
-    String researchArea = "artificial intelligence and research automation";
-    if (lowerPrompt.contains("tumor") || lowerPrompt.contains("mri")) researchArea = "medical image segmentation";
-    else if (lowerPrompt.contains("dengue") || lowerPrompt.contains("weather")) researchArea = "disease risk prediction";
 
     return """
 1. Research Objective
-This study focuses on $researchArea. The main objective is to improve research or clinical decision-making through intelligent computational methods.
+This study focuses on automated research assistance. The main objective is to improve research productivity through intelligent tools.
 
-2. Methodology
-The proposed approach uses machine learning or deep learning techniques to analyze complex data patterns, including preprocessing, feature extraction, and model evaluation.
-
-3. Key Findings
-The study suggests that intelligent AI-based methods can improve accuracy and efficiency compared to traditional approaches.
-
-4. Conclusion
-The work demonstrates the potential of AI-driven systems in $researchArea. Future improvements may include larger datasets and real-world validation.
-
-Note: Gemini API was unavailable, so this fallback was generated locally.
+Note: Gemini API was unavailable or the key is limited, so this local response was generated.
 """;
   }
 }
