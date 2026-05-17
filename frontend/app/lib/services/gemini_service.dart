@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // নিরাপত্তার জন্য সরাসরি কি (Key) কোড থেকে সরানো হয়েছে।
-  // এটি Vercel-এর Environment Variables থেকে আসবে।
+  // এটি Vercel-এর Environment Variable থেকে আসবে।
   static const String apiKey = String.fromEnvironment('OPENROUTER_API_KEY');
   
-  // OpenRouter-এ Gemini Flash মডেলের সঠিক নাম
+  // সঠিক মডেল নাম নিশ্চিত করা হয়েছে
   static const String modelName = "google/gemini-2.0-flash-001"; 
 
   static Future<String> generateChatResponse({required String prompt}) async {
@@ -37,15 +36,14 @@ class GeminiService {
         }),
       );
 
-      final data = jsonDecode(response.body);
-
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         final text = data["choices"]?[0]?["message"]?["content"];
         if (text != null) return text;
       }
       
-      String errorMsg = data["error"]?["message"] ?? "Unknown Error";
-      return "AI Error ${response.statusCode}: $errorMsg";
+      final errorBody = jsonDecode(response.body);
+      return "AI Error ${response.statusCode}: ${errorBody['error']?['message'] ?? 'Unknown Error'}";
     } catch (e) {
       return "Connection Error: $e";
     }
