@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ১. Flutter SDK ডাউনলোড করা
+# ১. Flutter SDK ডাউনলোড
 if [ ! -d "flutter" ]; then
   echo "Downloading Flutter SDK..."
   git clone https://github.com/flutter/flutter.git -b stable --depth 1
@@ -17,4 +17,5 @@ flutter pub get
 
 # ৫. ওয়েব বিল্ড তৈরি করা (Vercel থেকে API Key নিয়ে)
 echo "Building for web..."
-flutter build web --release --base-href "/" --dart-define=OPENROUTER_API_KEY=$OPENROUTER_API_KEY
+# --dart-define ব্যবহার করে Vercel-এর কী-টি অ্যাপের ভেতর পাস করা হচ্ছে
+flutter build web --release --base-href "/" --dart-define=OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
