@@ -2,14 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // আপনার দেওয়া OpenRouter API Key এখানে defaultValue হিসেবে সেট করা হলো।
-  // এর ফলে লোকাল এবং Vercel দুই জায়গাতেই সরাসরি কাজ করবে।
-  static const String apiKey = String.fromEnvironment(
-    'OPENROUTER_API_KEY',
-    defaultValue: "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",
-  );
+  // এটি Vercel বা লোকাল রান কমান্ড থেকে 'OPENROUTER_API_KEY' ভেরিয়েবলটি নিবে।
+  static const String apiKey = String.fromEnvironment('OPENROUTER_API_KEY');
   
-  // সঠিক মডেল নাম
   static const String modelName = "google/gemini-2.0-flash-001"; 
 
   static Future<String> generateChatResponse({required String prompt}) async {
@@ -19,8 +14,11 @@ class GeminiService {
   }
 
   static Future<String> generateResponse({required String prompt}) async {
-    if (apiKey.isEmpty || apiKey == "YOUR_KEY_HERE") {
-      return "Error: API Key is missing. Please check GeminiService.dart configuration.";
+    // কী না থাকলে আপনার স্ক্রিনশটের মতো সঠিক গাইডলাইন মেসেজ দেখাবে
+    if (apiKey.isEmpty) {
+      return "Error: API Key is missing.\n\n"
+             "Vercel Dashboard-এ গিয়ে Settings > Environment Variables-এ "
+             "'OPENROUTER_API_KEY' নামে আপনার কী-টি সেভ করুন।";
     }
 
     try {
@@ -43,21 +41,20 @@ class GeminiService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        // OpenRouter রেসপন্স ফরম্যাট অনুযায়ী ডেটা নেওয়া হচ্ছে
         final text = data["choices"]?[0]?["message"]?["content"];
         if (text != null) return text;
       }
       
-      final errorBody = jsonDecode(response.body);
-      return "AI Error ${response.statusCode}: ${errorBody['error']?['message'] ?? 'Check your OpenRouter account status'}";
+      String errorMsg = data["error"]?["message"] ?? "Unknown API Error";
+      return "AI Error ${response.statusCode}: $errorMsg. Please ensure your API key in Vercel is correct.";
     } catch (e) {
-      return "Connection Error: $e";
+      return "Connection Error: $e. Please check your internet connection.";
     }
   }
 
   static Future<String> generatePdfSummary({required String fileName, required String extractedText}) async {
     final length = extractedText.length > 3000 ? 3000 : extractedText.length;
-    return generateResponse(prompt: "Summarize this research paper: $fileName. Text: ${extractedText.substring(0, length)}");
+    return generateResponse(prompt: "Summarize research paper: $fileName. Text: ${extractedText.substring(0, length)}");
   }
 
   static Future<String> generateSummary({required String title, required String abstract}) async {

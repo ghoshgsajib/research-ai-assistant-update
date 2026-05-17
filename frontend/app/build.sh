@@ -15,7 +15,7 @@ flutter config --enable-web
 # ৪. প্যাকেজ গেট করা
 flutter pub get
 
-# ৫. ওয়েব বিল্ড তৈরি করা
+# ৫. ওয়েব বিল্ড তৈরি করা (Vercel থেকে OPENROUTER_API_KEY নিয়ে অ্যাপে পাস করা হচ্ছে)
 echo "Building for web..."
-# Vercel থেকে OPENROUTER_API_KEY নিয়ে অ্যাপে পাস করা হচ্ছে
+# এখানে --dart-define ব্যবহার করে আপনার ভেরিয়েবলটি ইনজেক্ট করা হচ্ছে
 flutter build web --release --base-href "/" --dart-define=OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
