@@ -14,6 +14,7 @@ import '../../experiment/screens/experiment_tracker_screen.dart';
 import '../../docs/screens/project_docs_screen.dart';
 import '../../notes/screens/research_notes_screen.dart';
 import '../../chat/screens/ai_chat_screen.dart';
+import '../../admin/screens/admin_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkAdmin();
+  }
+
+  Future<void> checkAdmin() async {
+    final status = await AuthService.isAdmin();
+    setState(() {
+      isAdmin = status;
+    });
+  }
+
   final List<Map<String, dynamic>> features = const [
     {"title": "AI Chat", "subtitle": "Ask research questions", "icon": Icons.chat_bubble_outline},
     {"title": "Upload Paper", "subtitle": "Extract text from PDF", "icon": Icons.picture_as_pdf_outlined},
@@ -51,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case "Experiment Tracker": screen = const ExperimentTrackerScreen(); break;
       case "Research Notes": screen = const ResearchNotesScreen(); break;
       case "Project Docs": screen = const ProjectDocsScreen(); break;
+      case "Admin Panel": screen = const AdminDashboardScreen(); break;
       default: return;
     }
     Navigator.push(context, MaterialPageRoute(builder: (context) => screen)).then((_) => setState(() {}));
@@ -77,6 +94,39 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(AuthService.currentUser ?? "User", style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 25),
             
+            // Admin Panel Card - শুধুমাত্র অ্যাডমিনদের জন্য
+            if (isAdmin) ...[
+              InkWell(
+                onTap: () => openFeature("Admin Panel"),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [primary, Colors.blueAccent.shade700]),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings, color: Colors.black, size: 30),
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Admin Control Panel", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+                            Text("Manage users and view system database", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios, color: Colors.black54, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+            ],
+
             // Stats Row
             Row(
               children: [

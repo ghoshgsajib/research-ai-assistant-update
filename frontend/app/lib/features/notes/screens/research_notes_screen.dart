@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../models/note_model.dart';
 import '../../../services/note_service.dart';
@@ -24,7 +25,6 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
 
     return NoteService.notes.where((note) {
       final query = searchQuery.toLowerCase();
-
       return note.title.toLowerCase().contains(query) ||
           note.content.toLowerCase().contains(query);
     }).toList();
@@ -42,11 +42,16 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
     }
 
     if (editingIndex == null) {
-      await NoteService.addNote(NoteModel(title: title, content: content));
+      // সঠিক মেথড কল করা হচ্ছে (টাইটেল এবং কন্টেন্ট পাস করে)
+      await NoteService.addNote(title, content);
     } else {
+      final prefs = await SharedPreferences.getInstance();
+      final String userEmail = prefs.getString('email') ?? "Unknown User";
+
       NoteService.notes[editingIndex!] = NoteModel(
         title: title,
         content: content,
+        userEmail: userEmail,
       );
 
       await NoteService.saveToStorage();
@@ -73,7 +78,6 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
   void cancelEdit() {
     titleController.clear();
     contentController.clear();
-
     setState(() {
       editingIndex = null;
     });
@@ -83,9 +87,7 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
     final originalIndex = NoteService.notes.indexOf(
       filteredNotes[filteredIndex],
     );
-
     await NoteService.deleteNote(originalIndex);
-
     setState(() {});
   }
 
@@ -95,28 +97,16 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          title: const Text(
-            "Delete Note?",
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            "This note will be permanently deleted.",
-            style: TextStyle(color: Colors.white70),
-          ),
+          title: const Text("Delete Note?", style: TextStyle(color: Colors.white)),
+          content: const Text("This note will be permanently deleted.", style: TextStyle(color: Colors.white70)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 deleteNote(index);
               },
-              child: const Text(
-                "Delete",
-                style: TextStyle(color: Colors.redAccent),
-              ),
+              child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
             ),
           ],
         );
@@ -125,19 +115,7 @@ class _ResearchNotesScreenState extends State<ResearchNotesScreen> {
   }
 
   void copyNote(NoteModel note) {
-    Clipboard.setData(
-      ClipboardData(
-        text:
-            """
-Title:
-${note.title}
-
-Note:
-${note.content}
-""",
-      ),
-    );
-
+    Clipboard.setData(ClipboardData(text: "Title: ${note.title}\nNote: ${note.content}"));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Note copied to clipboard 🚀")),
     );
@@ -150,20 +128,9 @@ ${note.content}
         children: [
           Icon(Icons.note_alt_outlined, color: Colors.purpleAccent, size: 80),
           SizedBox(height: 18),
-          Text(
-            "No notes found",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text("No notes found", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
-          Text(
-            "Save literature review ideas, research thoughts, or experiment plans here.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, height: 1.5),
-          ),
+          Text("Save literature review ideas or research thoughts here.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, height: 1.5)),
         ],
       ),
     );
@@ -211,9 +178,7 @@ ${note.content}
                     height: 55,
                     child: ElevatedButton(
                       onPressed: saveNote,
-                      child: Text(
-                        editingIndex == null ? "Save Note" : "Update Note",
-                      ),
+                      child: Text(editingIndex == null ? "Save Note" : "Update Note"),
                     ),
                   ),
                 ),
@@ -221,10 +186,7 @@ ${note.content}
                   const SizedBox(width: 12),
                   SizedBox(
                     height: 55,
-                    child: ElevatedButton(
-                      onPressed: cancelEdit,
-                      child: const Icon(Icons.close),
-                    ),
+                    child: ElevatedButton(onPressed: cancelEdit, child: const Icon(Icons.close)),
                   ),
                 ],
               ],
@@ -235,19 +197,12 @@ ${note.content}
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search notes...",
-                hintStyle: const TextStyle(color: Colors.white54),
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 filled: true,
                 fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
+              onChanged: (value) => setState(() => searchQuery = value),
             ),
             const SizedBox(height: 24),
             notes.isEmpty
@@ -258,60 +213,23 @@ ${note.content}
                     itemCount: notes.length,
                     itemBuilder: (context, index) {
                       final note = notes[index];
-
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
+                        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(18)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    note.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => copyNote(note),
-                                  icon: const Icon(
-                                    Icons.copy,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => startEdit(index),
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.blueAccent,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => confirmDelete(index),
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                  ),
-                                ),
+                                Expanded(child: Text(note.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
+                                IconButton(onPressed: () => copyNote(note), icon: const Icon(Icons.copy, color: Colors.white70)),
+                                IconButton(onPressed: () => startEdit(index), icon: const Icon(Icons.edit, color: Colors.blueAccent)),
+                                IconButton(onPressed: () => confirmDelete(index), icon: const Icon(Icons.delete, color: Colors.redAccent)),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              note.content,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                height: 1.5,
-                              ),
-                            ),
+                            Text(note.content, style: const TextStyle(color: Colors.white70, height: 1.5)),
                           ],
                         ),
                       );
